@@ -1,9 +1,18 @@
+"""
+indicator class to be used in StrategyLearner
+Modified based on ManualStrategy project
+Input: ticker (sym as a string like "JPM"), start date, end date
+Output: indicator value, as data structure as price_JPM
+"""
+
 
 import pandas as pd
 import numpy as np
 import datetime as dt
 from util import get_data, plot_data
 import matplotlib.pyplot as plt
+
+
 
 def plot_data(df, title="Stock prices"):
     """Plot stock prices with a custom title and meaningful axis labels."""
@@ -27,23 +36,23 @@ def get_bollinger_bands(rm, rstd):
     return upper_band, lower_band
 
 
-def bollingerBand(sd,ed):
+def bollingerBand(sym, sd,ed):
     dates = pd.date_range(sd, ed)
     window_size = 20
-    df = get_data(['JPM'], dates)  # automatically adds SPY
-    price_JPM = df['JPM']
+    df = get_data([sym], dates)  # automatically adds SPY
+    price_JPM = df[sym]
 
     # Compute Bollinger Bands
     # 1. Compute rolling mean
-    rm_JPM = get_rolling_mean(price_JPM, window=window_size)
+    rm = get_rolling_mean(price_JPM, window=window_size)
     # 2. Compute rolling standard deviation
-    rstd_JPM = get_rolling_std(price_JPM, window=window_size)
+    rstd = get_rolling_std(price_JPM, window=window_size)
     # 3. Compute upper and lower bands
-    upper_band, lower_band = get_bollinger_bands(rm_JPM, rstd_JPM)
+    upper_band, lower_band = get_bollinger_bands(rm, rstd)
 
     # Plot raw JPM values, rolling mean and Bollinger Bands
-    ax = price_JPM.plot(title="Bollinger Bands", label='JPM')
-    rm_JPM.plot(label='Rolling mean', ax=ax)
+    ax = price_JPM.plot(title="Bollinger Bands", label=sym)
+    rm.plot(label='Rolling mean', ax=ax)
     upper_band.plot(label='upper band', ax=ax)
     lower_band.plot(label='lower band', ax=ax)
 
@@ -53,45 +62,42 @@ def bollingerBand(sd,ed):
     ax.legend(loc='lower left')
     plt.show()
 
-def sma(sd,ed):
+def sma(sym, sd,ed):
     dates = pd.date_range(sd, ed)
     window_size = 20
-    df = get_data(['JPM'], dates)  # automatically adds SPY
-    price_JPM = df['JPM']
+    df = get_data([sym], dates)  # automatically adds SPY
+    price = df[sym]
 
-    rm_JPM = get_rolling_mean(price_JPM, window=window_size)
-    ax = price_JPM.plot(title="Simple Moving Averages", label='JPM')
-    rm_JPM.plot(label='SMAs', ax=ax)
-
-    #sma_index = (price_JPM - rm_JPM )/ rm_JPM
-    #ax = sma_index.plot(title="SMA indicator", label='price/SMA-1')
+    sma = get_rolling_mean(price, window=window_size)
+    ax = price.plot(title="Simple Moving Averages", label=sym)
+    sma.plot(label='SMAs', ax=ax)
 
     ax.set_xlabel("Date")
     ax.set_ylabel("Price")
     ax.legend(loc='lower left')
     plt.show()
 
-def ema(sd,ed):
+def ema(sym, sd,ed):
     dates = pd.date_range(sd, ed)
     window_size = 10 #use 10-period window
-    df = get_data(['JPM'], dates)  # automatically adds SPY
-    price_JPM = df['JPM']
+    df = get_data([sym], dates)  # automatically adds SPY
+    price = df[sym]
 
-    print price_JPM
+    print price
 
     # init ema
-    ema_JPM = price_JPM.copy()
-    ema_JPM.fillna(0, inplace = True)
+    ema = price.copy()
+    ema.fillna(0, inplace = True)
     # init the first value
-    ema_JPM[window_size] = np.mean(price_JPM[0:window_size])
+    ema[window_size] = np.mean(price[0:window_size])
     # calc the weight factor
     multiplier = 2.0/ (window_size+1)
     # get ema_index[i] from ema_index[i-1]
-    for i in range(window_size+1,len(price_JPM)):
-        ema_JPM[i] = ema_JPM[i-1] + multiplier *(price_JPM[i] - ema_JPM[i-1])
+    for i in range(window_size+1,len(price)):
+        ema[i] = ema[i-1] + multiplier *(price[i] - ema[i-1])
 
-    ax = price_JPM.plot(title="Exponential Moving Averages", label='JPM')
-    ema_JPM.plot(label='EMAs', ax=ax)
+    ax = price.plot(title="Exponential Moving Averages", label=sym)
+    ema.plot(label='EMAs', ax=ax)
 
     #ema_index = (price_JPM - ema_JPM )/ ema_JPM
     #ax = ema_index.plot(title="EMA indicator", label='price/EMA-1')
@@ -101,7 +107,7 @@ def ema(sd,ed):
     ax.legend(loc='lower left')
     plt.show()
 
-    print ema_JPM
+    print ema
 
 if __name__ == '__main__':
     sd = dt.date(2008,1,1)

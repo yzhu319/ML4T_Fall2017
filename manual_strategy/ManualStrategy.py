@@ -7,12 +7,10 @@ import indicators as indic
 import marketsimcode as mktsim
 
 def bb_indicator(symbol, sd,ed):
-    symbol = ['JPM'] #not used here... since only one stock
     dates = pd.date_range(sd, ed)
     window_size = 19
-    df = get_data(['JPM'], dates)  # automatically adds SPY
-    price_JPM = df['JPM']
-
+    df = get_data(symbol, dates)  # automatically adds SPY
+    price_JPM = df[symbol]
     # Compute Bollinger Bands
     # 1. Compute rolling mean
     rm_JPM = indic.get_rolling_mean(price_JPM, window=window_size)
@@ -29,7 +27,7 @@ def bb_indicator(symbol, sd,ed):
     trades_df[bb_index > 1] = -1000
     trades_df[bb_index < -1] = +1000
     #trades_df.plot(title = "trades", label="trades" )
-    trades_df = trades_df.to_frame()
+    #trades_df = trades_df.to_frame()
     #print trades_df # will be passed into marketSim
     return trades_df
 
@@ -37,8 +35,8 @@ def bb_indicator(symbol, sd,ed):
 def sma_indicator(symbol, sd,ed):
     dates = pd.date_range(sd, ed)
     window_size = 21
-    df = get_data(['JPM'], dates)  # automatically adds SPY
-    price_JPM = df['JPM']
+    df = get_data(symbol, dates)  # automatically adds SPY
+    price_JPM = df[symbol]
     rm_JPM = indic.get_rolling_mean(price_JPM, window=window_size)
 
     # sma index = (stock price - rolling_mean)/rolling_mean
@@ -53,38 +51,7 @@ def sma_indicator(symbol, sd,ed):
     trades_df[sma_index > 0.10] = -1000
     trades_df[sma_index < -0.10] = +1000
     #trades_df.plot(title = "trades", label="trades" )
-    trades_df = trades_df.to_frame()
-    #print trades_df # will be passed into marketSim
-    return trades_df
-
-def ema_indicator(symbol, sd,ed):
-    dates = pd.date_range(sd, ed)
-    window_size = 20 #use 10-period window
-    df = get_data(['JPM'], dates)  # automatically adds SPY
-    price_JPM = df['JPM']
-
-    # init ema
-    ema_JPM = price_JPM.copy()
-    ema_JPM.fillna(0, inplace = True)
-    # init the first value
-    ema_JPM[window_size] = np.mean(price_JPM[0:window_size])
-    # calc the weight factor
-    multiplier = 2.0/ (window_size+1)
-    # get ema_index[i] from ema_index[i-1]
-    for i in range(window_size+1,len(price_JPM)):
-        ema_JPM[i] = ema_JPM[i-1] + multiplier *(price_JPM[i] - ema_JPM[i-1])
-
-    # sma index = (stock price - rolling_mean)/rolling_mean
-    ema_index = (price_JPM - ema_JPM )/ ema_JPM
-    ema_index.fillna(0, inplace = True)
-
-    trades_df = price_JPM.copy()
-    trades_df[:] = 0
-
-    trades_df[ema_index > 0.08] = -1000
-    trades_df[ema_index < -0.08] = +1000
-    #trades_df.plot(title = "trades", label="trades" )
-    trades_df = trades_df.to_frame()
+    #trades_df = trades_df.to_frame()
     #print trades_df # will be passed into marketSim
     return trades_df
 
@@ -93,7 +60,7 @@ def test_policy_bb(symbol, sd, ed, start_value):
     commission = 9.95
     impact = 0.005
     # pass df_trade to marketsimcode to plot
-    portvals = mktsim.compute_portvals(trades_df=trades_df, start_val= start_value, commission= commission, impact=impact)
+    portvals = mktsim.compute_portvals(symbol, trades_df=trades_df, start_val= start_value, commission= commission, impact=impact)
     mktsim.gen_plot(trades_df, portvals, "BollingerBandStrategy: Fund vs Benchmark")
     #indic.bollingerBand()
 
@@ -101,15 +68,8 @@ def test_policy_sma(symbol, sd, ed, start_value):
     trades_df = sma_indicator(symbol, sd, ed)
     commission = 9.95
     impact = 0.005
-    portvals = mktsim.compute_portvals(trades_df=trades_df, start_val= start_value, commission= commission, impact=impact)
+    portvals = mktsim.compute_portvals(symbol, trades_df=trades_df, start_val= start_value, commission= commission, impact=impact)
     mktsim.gen_plot(trades_df, portvals, "SimpleMovingAverageStrategy: Fund vs Benchmark")
-
-def test_policy_ema(symbol, sd, ed, start_value):
-    trades_df = ema_indicator(symbol, sd, ed)
-    commission = 9.95
-    impact = 0.005
-    portvals = mktsim.compute_portvals(trades_df=trades_df, start_val= start_value, commission= commission, impact=impact)
-    mktsim.gen_plot(trades_df, portvals, "ExponentialMovingAverageStrategy: Fund vs Benchmark")
 
 if __name__ == "__main__":
     start_value = 100000
@@ -123,7 +83,6 @@ if __name__ == "__main__":
     symbol = ['JPM']
 
     test_policy_bb(symbol, sd, ed, start_value)
-    #test_policy_sma(symbol, sd, ed, start_value)
-    #test_policy_ema(symbol, sd, ed, start_value)
+    test_policy_sma(symbol, sd, ed, start_value)
 
 

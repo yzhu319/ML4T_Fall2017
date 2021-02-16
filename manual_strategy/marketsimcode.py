@@ -6,13 +6,12 @@ from util import get_data, plot_data
 import matplotlib.pyplot as plt
 
 
-def compute_portvals(trades_df, start_val = 100000, commission=9.95, impact=0.005):
+def compute_portvals(symbols, trades_df, start_val = 100000, commission=9.95, impact=0.005):
 
     # new market simulator, takes in trade_df (new):
     # a df whose values are net-holdings for ALL days, +1000, -1000, or 0; from start_date to end_date
     dates = trades_df.index
 
-    symbols = ["JPM"]
     prices_all = get_data(symbols, dates)  # automatically adds SPY
     prices_all.fillna(method = "ffill",inplace=True)
     prices_all.fillna(method = "bfill",inplace=True)
@@ -36,7 +35,7 @@ def compute_portvals(trades_df, start_val = 100000, commission=9.95, impact=0.00
     #print trades_delta_df
 
     for my_date, row in trades_df.iterrows():
-        my_symbol = ["JPM"]
+        my_symbol = symbols
         my_share = trades_delta_df[my_symbol[0]][my_date]
 
         unit_price = prices_df[my_symbol[0]][my_date]
@@ -175,7 +174,7 @@ def test_code():
     dates = np.array(['2009-01-02','2009-01-05','2009-01-06','2009-01-07','2009-01-08'],dtype='datetime64[D]')
     trades_df = pd.DataFrame(data = trading_data, index= dates, columns = ['JPM'])
 
-    portvals = compute_portvals(trades_df=trades_df, start_val=100000, commission=9.95, impact=0.005)
+    portvals = compute_portvals(symbols=["JPM"], trades_df=trades_df, start_val=100000, commission=9.95, impact=0.005)
     gen_plot(trades_df, portvals, "Daily portfolio and SPY")
 
 if __name__ == "__main__":
